@@ -1,0 +1,91 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class AdvancedMovement : MonoBehaviour
+{
+    // Add public variables for controlling movement speed and jump height
+    public float movementSpeed = 5.0f;
+    public float sprintMultiplier = 2.0f;
+    public float jumpHeight = 5.0f;
+    public float slideDuration = 0.5f;
+    public float crawlSpeed = 2.0f;
+    public float leanAmount = 0.5f;
+    public float crouchAmount = 0.5f;
+
+    // Add private variables for internal use
+    private bool isSprinting = false;
+    private bool isJumping = false;
+    private bool isSliding = false;
+    private bool isCrawling = false;
+    private bool isLeaning = false;
+    private bool isCrouching = false;
+    private float defaultHeight;
+    private float defaultSpeed;
+    private CharacterController characterController;
+
+    // Use this for initialization
+    void Start()
+    {
+        // Get a reference to the character controller
+        characterController = GetComponent<CharacterController>();
+
+        // Store the default height and speed for later use
+        defaultHeight = characterController.height;
+        defaultSpeed = movementSpeed;
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        // Get input from WASD keys
+        float horizontalInput = Input.GetAxis("Horizontal");
+        float verticalInput = Input.GetAxis("Vertical");
+
+        // Calculate the movement vector based on input and current orientation
+        Vector3 movement = transform.forward * verticalInput + transform.right * horizontalInput;
+
+        // Normalize the movement vector to ensure consistent speed
+        movement.Normalize();
+
+        // Apply sprint multiplier if sprinting
+        if (isSprinting && !isCrawling)
+        {
+            movement *= sprintMultiplier;
+        }
+
+        // Apply crawl speed if crawling
+        if (isCrawling)
+        {
+            movement *= crawlSpeed;
+        }
+
+        // Check for jump input
+        if (Input.GetButtonDown("Jump") && !isJumping && !isSliding && !isCrawling)
+        {
+            // Set isJumping to true to prevent multiple jumps
+            isJumping = true;
+
+            // Add upward force to character controller
+            characterController.Move(Vector3.up * jumpHeight);
+        }
+
+        // Check for slide input
+        if (Input.GetButtonDown("Slide") && !isJumping && !isSliding && !isCrawling)
+        {
+            // Set isSliding to true to prevent multiple slides
+            isSliding = true;
+
+            // Reduce character controller height and speed for the duration of the slide
+            characterController.height = defaultHeight * crouchAmount;
+            movementSpeed = defaultSpeed * crouchAmount;
+
+            // Start a coroutine to reset character controller height and speed after the slide duration
+            StartCoroutine(ResetSlide());
+        }
+
+        // Check for crawl input
+        if (Input.GetButtonDown("Crawl") && !isJumping && !isSliding)
+        {
+            // Toggle isCrawling and adjust character controller height accordingly
+            isCrawling = !is
